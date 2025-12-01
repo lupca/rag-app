@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { RagStore, Document, QueryResult, CustomMetadata } from '../types';
+import { RagStore, Document, QueryResult, CustomMetadata, ChatMessage } from '../types';
 
 let ai: GoogleGenAI;
 
@@ -38,12 +38,24 @@ export async function uploadToRagStore(ragStoreName: string, file: File): Promis
     }
 }
 
-export async function fileSearch(ragStoreName: string, query: string): Promise<QueryResult> {
+export async function fileSearch(ragStoreName: string, history: ChatMessage[], query: string): Promise<QueryResult> {
     if (!ai) throw new Error("Gemini AI not initialized");
+    
+    const contents = history.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.parts[0].text }] 
+    }));
+    
+    contents.push({
+        role: 'user',
+        parts: [{ text: query }]
+    });
+
     const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: query + "DO NOT ASK THE USER TO READ THE MANUAL, pinpoint the relevant sections in the response itself.",
+        contents: contents,
         config: {
+            systemInstruction: "DO NOT ASK THE USER TO READ THE MANUAL, pinpoint the relevant sections in the response itself.",
             tools: [
                     {
                         fileSearch: {

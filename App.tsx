@@ -215,7 +215,7 @@ const App: React.FC = () => {
         setIsQueryLoading(true);
 
         try {
-            const result = await geminiService.fileSearch(activeRagStoreName, message);
+            const result = await geminiService.fileSearch(activeRagStoreName, chatHistory, message);
             const modelMessage: ChatMessage = {
                 role: 'model',
                 parts: [{ text: result.text }],
